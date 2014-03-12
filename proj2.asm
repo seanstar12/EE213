@@ -1,5 +1,5 @@
 ; ==========================================================
-:
+;
 ;     LED.1 : RED : P2.4            SW.1 : P2.0 
 ;     LED.2 : YEL : P0.5            SW.2 : P0.1
 ;     LED.3 : GRN : P2.7            SW.3 : P2.3
@@ -17,12 +17,7 @@
 #include <reg932.inc>
 
   CSEG at 0x0000
-init:
-  MOV P0M1,#0				              ; Set ports to bi-directional
-	MOV P1M1,#0
-	MOV P2M1,#0
-	MOV TMOD,#0x01		              ; Set TIMER 0 into mode 1
-  MOV R7,#0
+  SJMP init
 
   CSEG AT 0x000B		            	; Interrupt Vector Address for TIMER 0
 	CPL P1.7				              	; compliments P1.4 to produce sound from speaker
@@ -33,29 +28,51 @@ init:
 	MOV TL0, A			              	; into A and puts it into the lower byte of TIMER 0
 	RETI						              	; Returns from the interrupt
 
+init:
+  MOV P0M1,#0				              ; Set ports to bi-directional
+	MOV P1M1,#0
+	MOV P2M1,#0
+	MOV TMOD,#0x01		              ; Set TIMER 0 into mode 1
+  MOV R7,#0
+
+clr:
+  SETB P2.4
+  SETB P0.5
+  SETB P2.7
+  SETB P0.6
+  SETB P1.6
+  SETB P0.4
+  SETB P2.5
+  SETB P0.7
+  SETB P2.6
+
 main:
 	JNB P2.0,cuntr                  ; Stay in loop until button is pressed
 	SJMP main
-
+  
 cuntr:
-  MOV R0,#255
-  MOV R1,#255
-  MOV R2,#255
+  tout_0:
+    MOV R0,#200
+  tout_1:
+    MOV R1,#255
+  tout_2:
+    JNB P2.0,pressedButton
+    DJNZ R1, tout_2
+    DJNZ R0, tout_1
 
-cntrDelay:
-  JNB P2.0,pressedButton
-  DJNZ R2,cntrDelay
-  DJNZ R1,cntrDelay
-  DJNZ R0,cntrDelay
   ACALL MATHS
   ACALL THROB
+  
+  wait:
+    JNB P2.2, clr
+    SJMP wait
 
 pressedButton:
   CLR P1.6
   JNB P2.0,pressedButton
+  SETB P1.6
   ACALL DEBOUNCE
   INC R7
-  SETB P1.6
   SJMP cuntr
 	
 ; ==========================================================
@@ -73,7 +90,7 @@ MATHS:
 
 THROB:                            ; makes the speaker 'drop a mad beat'
   JZ noThrob
-  throb:
+  throbInside:
     MOV R5,#0xF7                  ; R3: number of beeps 
     MOV R6,#0xD1                  ; R4: remainder for leds
     SETB ET0                      ; R5: upperbit of timer for A6 note
@@ -87,7 +104,7 @@ THROB:                            ; makes the speaker 'drop a mad beat'
     MOV R5,#0x00
     MOV R6,#0x00
     acall DELAY
-    DJNZ R3, throb
+    DJNZ R3, throbInside
   noThrob:
     nop
 
