@@ -35,7 +35,7 @@ init:
 
 main:
 	JNB P2.0,cuntr                  ; Stay in loop until button is pressed
-	JMP main
+	SJMP main
 
 cuntr:
   MOV R0,#255
@@ -56,7 +56,7 @@ pressedButton:
   ACALL DEBOUNCE
   INC R7
   SETB P1.6
-  SJUMP cuntr
+  SJMP cuntr
 	
 ; ==========================================================
 ;	Subroutines Go Below This Line. Also CAPS for all Subs.
@@ -74,9 +74,6 @@ MATHS:
 THROB:                            ; makes the speaker 'drop a mad beat'
   JZ noThrob
   throb:
-    MOV TMOD,#0x01                ; R0: length of beep
-    MOV TH0,#0                    ; R1: 
-    MOV TL0,#0                    ; R2: 
     MOV R5,#0xF7                  ; R3: number of beeps 
     MOV R6,#0xD1                  ; R4: remainder for leds
     SETB ET0                      ; R5: upperbit of timer for A6 note
