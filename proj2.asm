@@ -35,7 +35,7 @@ init:
 	MOV TMOD,#0x01		              ; Set TIMER 0 into mode 1
   MOV R7,#0
 
-clr:
+clear:
   SETB P2.4
   SETB P0.5
   SETB P2.7
@@ -51,20 +51,22 @@ main:
 	SJMP main
   
 cuntr:
+	MOV R0,#20
   tout_0:
-    MOV R0,#200
+    MOV R1,#200
   tout_1:
-    MOV R1,#255
+    MOV R2,#255
   tout_2:
     JNB P2.0,pressedButton
-    DJNZ R1, tout_2
-    DJNZ R0, tout_1
+	DJNZ R2, tout_2
+    DJNZ R1, tout_1
+    DJNZ R0, tout_0
 
   ACALL MATHS
   ACALL THROB
   
   wait:
-    JNB P2.2, clr
+    JNB P2.2, clear
     SJMP wait
 
 pressedButton:
@@ -80,6 +82,7 @@ pressedButton:
 ; ==========================================================	
 
 MATHS:
+  CLR P0.7
   MOV A,R7                        ; Num of Presses into Accum
   MOV B,#16                       ; Divide by 16
   DIV AB                          ; 
@@ -99,7 +102,7 @@ THROB:                            ; makes the speaker 'drop a mad beat'
 
     MOV R0,#32
     acall DELAY
-    CLR TRO
+    CLR TR0
     MOV R0,#16
     MOV R5,#0x00
     MOV R6,#0x00
@@ -107,15 +110,14 @@ THROB:                            ; makes the speaker 'drop a mad beat'
     DJNZ R3, throbInside
   noThrob:
     nop
-
+	MOV R7,#0x00
   RET
 
 DEBOUNCE:                         ; Used for debouncing switches
-  debounceLoop:
     MOV R1,#50
-  debounceLoop_1:
+  debounceLoop:
     MOV R2,#200
-
+  debounceLoop_1:
     DJNZ R2,debounceLoop_1
     DJNZ R1,debounceLoop
   RET
