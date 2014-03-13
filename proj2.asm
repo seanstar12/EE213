@@ -87,9 +87,42 @@ MATHS:
   MOV A,R7                        ; Num of Presses into Accum
   MOV B,#16                       ; Divide by 16
   DIV AB                          ; 
-  MOV 1DH,R7                      ; store total button pushes
+  MOV 20H,R7                      ; store total button pushes
   MOV R3,A                        ; Store quotient for beeps
   MOV R4,B                        ; Store remainder for binary output of leds
+  MOV A,B
+  RET
+
+LEDS:
+  JZ noLeds                       ; R7,R6,R5,R4
+  MOV R0,#4
+  MOV R1,#0x21
+  MOV R6,#0x0F
+  MOV R7,A 
+  ledsInside:
+    MOV A,R7
+    RR A
+    MOV R7,A
+    ANL A,R6
+    MOV @R1,A
+    INC R1
+    DJNZ R0, ledsInside
+
+  lightBit4:
+    JNB 24H, lightBit3
+    CLR P2.4
+  lightBit3:
+    JNB 24H, lightBit2
+    CLR P0.5
+  lightBit2:
+    JNB 24H, lightBit1
+    CLR P2.3
+  lightBit1:
+    JNB 24H, noLeds
+    CLR P0.4
+
+  noLeds:
+    nop
   RET
 
 THROB:                            ; makes the speaker 'drop a mad beat'
