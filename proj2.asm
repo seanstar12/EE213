@@ -33,7 +33,6 @@ init:
 	MOV P1M1,#0
 	MOV P2M1,#0
 	MOV TMOD,#0x01		              ; Set TIMER 0 into mode 1
-  MOV R7,#0
 
 clear:
   SETB P2.4
@@ -59,7 +58,7 @@ cuntr:
     MOV R2,#255
   tout_2:
     JNB P2.0,pressedButton
-	DJNZ R2, tout_2
+  	DJNZ R2, tout_2
     DJNZ R1, tout_1
     DJNZ R0, tout_0
 
@@ -96,8 +95,6 @@ MATHS:
 THROB:                            ; makes the speaker 'drop a mad beat'
   JZ noThrob
   throbInside:
-	MOV R7,#0x00
-	MOV R7,#0x00
     MOV R5,#0xF7                  ; R3: number of beeps 
     MOV R6,#0xD1                  ; R4: remainder for leds
     SETB ET0                      ; R5: upperbit of timer for A6 note
@@ -134,6 +131,6 @@ DELAY:                            ; R0 is set before call to lengthen loop
     DJNZ R2,delayLoop_2
     DJNZ R1,delayLoop_1
     DJNZ R0,delayLoop
-    RET
+  RET
 
-  END
+END
