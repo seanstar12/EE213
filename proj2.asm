@@ -29,9 +29,9 @@
 
 init:
   MOV P0M1,#0				              ; Set ports to bi-directional
-	MOV P1M1,#0
-	MOV P2M1,#0
-	MOV TMOD,#0x01		              ; Set TIMER 0 into mode 1
+  MOV P1M1,#0
+  MOV P2M1,#0
+  MOV TMOD,#0x01		              ; Set TIMER 0 into mode 1
 
 clear:
   SETB P2.4                       ; Turns off ALL leds
@@ -43,22 +43,22 @@ clear:
   SETB P2.5
   SETB P0.7
   SETB P2.6
-	MOV R7,#0                       ; Makes sure counter is clear
+  MOV R7,#0                       ; Makes sure counter is clear
 
 main:
-	JNB P2.0,cntr                   ; Stay in loop until button is pressed
+  JNB P2.0,cntr                   ; Stay in loop until button is pressed
   JNB P2.1,debugSet               ; Enters debug mode with hard set value of button presses
-	SJMP main
+  SJMP main
   
 cntr:
-	MOV R0,#20                      ; timeout function here
+  MOV R0,#20                      ; timeout function here
   tout_0:                         ; waits for X secods then starts to run MATHS on button presses
     MOV R1,#255                   ; 
   tout_1:
     MOV R2,#255
   tout_2:
     JNB P2.0,pressedButton        ; if button 1 is pressed,
-  	DJNZ R2, tout_2
+    DJNZ R2, tout_2
     DJNZ R1, tout_1
     DJNZ R0, tout_0
 
@@ -129,7 +129,7 @@ LEDS:
     CLR P2.3
   lightBit1:
     MOV A, 21H
-    JZ noLeds
+    JZ noLed
     CLR P0.4
 
   noLed:                          ; don't turn on an led
