@@ -45,6 +45,7 @@ clear:
   SETB P2.5
   SETB P0.7
   SETB P2.6
+	MOV R7,#0x00
 
 main:
 	JNB P2.0,cuntr                  ; Stay in loop until button is pressed
@@ -53,7 +54,7 @@ main:
 cuntr:
 	MOV R0,#20
   tout_0:
-    MOV R1,#200
+    MOV R1,#255
   tout_1:
     MOV R2,#255
   tout_2:
@@ -63,6 +64,7 @@ cuntr:
     DJNZ R0, tout_0
 
   ACALL MATHS
+;  ACALL LEDS 
   ACALL THROB
   
   wait:
@@ -94,6 +96,8 @@ MATHS:
 THROB:                            ; makes the speaker 'drop a mad beat'
   JZ noThrob
   throbInside:
+	MOV R7,#0x00
+	MOV R7,#0x00
     MOV R5,#0xF7                  ; R3: number of beeps 
     MOV R6,#0xD1                  ; R4: remainder for leds
     SETB ET0                      ; R5: upperbit of timer for A6 note
@@ -101,16 +105,15 @@ THROB:                            ; makes the speaker 'drop a mad beat'
     SETB TR0                      ; R7: Number of presses
 
     MOV R0,#32
-    acall DELAY
+    ACALL DELAY
     CLR TR0
-    MOV R0,#16
+    MOV R0,#20
     MOV R5,#0x00
     MOV R6,#0x00
-    acall DELAY
+    ACALL DELAY
     DJNZ R3, throbInside
   noThrob:
     nop
-	MOV R7,#0x00
   RET
 
 DEBOUNCE:                         ; Used for debouncing switches
