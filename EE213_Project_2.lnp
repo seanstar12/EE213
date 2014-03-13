@@ -1,0 +1,5 @@
+"proj2.obj" 
+TO "EE213_Project_2" 
+RAMSIZE(256) 
+CODE( 0X0000-0X1FFF )
+XDATA( 0X0000-0X01FF )

@@ -15,10 +15,10 @@
 
 #include <reg932.inc>
 
-  CSEG at 0x0000                  ; start our program here. at 0
+CSEG at 0x0000                    ; start our program here. at 0
   SJMP init                       ; jump over interrupt and go to init
   
-  CSEG AT 0x000B		            	; Interrupt Vector Address for TIMER 0
+CSEG AT 0x000B	                 	; Interrupt Vector Address for TIMER 0
   CPL P1.7				              	; compliments P1.4 to produce sound from speaker
   CLR C
   MOV A, R5				              	; Reads upper byte of 16-bit timer re-load value
@@ -51,10 +51,10 @@ main:
   SJMP main
   
 cntr:
-  MOV R0,#20                      ; timeout function here
+  MOV R0,#21                      ; timeout function here
   tout_0:                         ; waits for X secods then starts to run MATHS on button presses
-    MOV R1,#255                   ; 
-  tout_1:
+    MOV R1,#255                   ; T= ((21*255*255)+11)(.000001085) = 1.4816 seconds
+  tout_1:                         ; Scope gave us 1.468 seconds
     MOV R2,#255
   tout_2:
     JNB P2.0,pressedButton        ; if button 1 is pressed,
