@@ -18,20 +18,20 @@
 CSEG at 0x0000                    ; start our program here. at 0
   SJMP init                       ; jump over interrupt and go to init
   
-CSEG AT 0x000B	                 	; Interrupt Vector Address for TIMER 0
-  CPL P1.7				              	; compliments P1.4 to produce sound from speaker
+CSEG AT 0x000B                    ; Interrupt Vector Address for TIMER 0
+  CPL P1.7                        ; compliments P1.4 to produce sound from speaker
   CLR C
-  MOV A, R5				              	; Reads upper byte of 16-bit timer re-load value
-  MOV TH0, A			              	; into A and puts it into the upper byte of TIMER 0
-  MOV A, R6				              	; Reads lower byte of 16-bit timer re-load value
-  MOV TL0, A			              	; into A and puts it into the lower byte of TIMER 0
-  RETI						              	; Returns from the interrupt
+  MOV A, R5                       ; Reads upper byte of 16-bit timer re-load value
+  MOV TH0, A                      ; into A and puts it into the upper byte of TIMER 0
+  MOV A, R6                       ; Reads lower byte of 16-bit timer re-load value
+  MOV TL0, A                      ; into A and puts it into the lower byte of TIMER 0
+  RETI                            ; Returns from the interrupt
 
 init:
-  MOV P0M1,#0				              ; Set ports to bi-directional
+  MOV P0M1,#0                     ; Set ports to bi-directional
   MOV P1M1,#0
   MOV P2M1,#0
-  MOV TMOD,#0x01		              ; Set TIMER 0 into mode 1
+  MOV TMOD,#0x01                  ; Set TIMER 0 into mode 1
 
 clear:
   SETB P2.4                       ; Turns off ALL leds
