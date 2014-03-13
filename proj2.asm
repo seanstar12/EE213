@@ -126,7 +126,7 @@ LEDS:
   lightBit2:
     MOV A, 22H
     JZ lightBit1
-    CLR P2.3
+    CLR P2.7
   lightBit1:
     MOV A, 21H
     JZ noLed
