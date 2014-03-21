@@ -65,7 +65,7 @@ cntr:
 debugMode:
   ACALL MATHS                     ; do maths and return values: R3=quotient  & R4=remainder
   ACALL LEDS                      ; turns on leds based on R4 -> goes first so lights are on before speaker
-  ACALL THROB                     ; Beeps based on R3
+  ACALL LAME                      ; Beeps based on R3
   
   wait:
     JNB P2.2, clear               ; after speaker and lights, loop until reset button is pressed
@@ -133,7 +133,6 @@ LEDS:
     CLR P0.4
 
   noLed:                          ; don't turn on an led
-    nop
   RET
 
 THROB:                            ; makes the speaker 'drop a mad beat'
@@ -157,6 +156,39 @@ THROB:                            ; makes the speaker 'drop a mad beat'
   noThrob:
     nop
   RET
+
+LAME:
+  MOV A, R3
+  JZ noLame
+  lameInside:
+    ACALL GETFREAK
+  DJNZ R3, lameInside
+  noLame:
+RET
+
+GETFREAK:
+  MOV R0, #32
+  MOV R5, #250
+  wait:
+    ACALL FREAK_ON
+  DJNZ R5, wait
+
+  MOV R5, #100
+  waitLess:
+    ACALL FREAK_OFF
+  DJNZ R5, waitLess
+
+RET
+
+FREAK_ON:
+  CPL P1.7
+  ACALL DELAY
+RET
+
+FREAK_OFF:
+  nop
+  ACALL DELAY
+RET
 
 DEBOUNCE:                         ; Used for debouncing switches
     MOV R1,#50
