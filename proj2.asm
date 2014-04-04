@@ -32,18 +32,7 @@ init:
   MOV P1M1,#0
   MOV P2M1,#0
   MOV TMOD,#0x01                  ; Set TIMER 0 into mode 1
-
-clear:
-  SETB P2.4                       ; Turns off ALL leds
-  SETB P0.5
-  SETB P2.7
-  SETB P0.6
-  SETB P1.6
-  SETB P0.4
-  SETB P2.5
-  SETB P0.7
-  SETB P2.6
-  MOV R7,#0                       ; Makes sure counter is clear
+  ACALL CLEAR
 
 main:
   JNB P2.0,cntr                   ; Stay in loop until button is pressed
@@ -188,6 +177,19 @@ RET
 FREAK_OFF:
   nop
   ACALL DELAY
+RET
+
+CLEAR:
+  SETB P2.4                       ; Turns off ALL leds
+  SETB P0.5
+  SETB P2.7
+  SETB P0.6
+  SETB P1.6
+  SETB P0.4
+  SETB P2.5
+  SETB P0.7
+  SETB P2.6
+  MOV R7,#0                       ; Makes sure counter is clear
 RET
 
 DEBOUNCE:                         ; Used for debouncing switches
