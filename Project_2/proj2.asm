@@ -13,6 +13,7 @@
 ;     Frequency of Note EQ: R3.R4 = 65536 - 3686400/(2F)
 ; ==========================================================
 
+
 #include <reg932.inc>
 
 CSEG at 0x0000                    ; start our program here. at 0
@@ -28,186 +29,585 @@ CSEG AT 0x000B                    ; Interrupt Vector Address for TIMER 0
   RETI                            ; Returns from the interrupt
 
 init:
-  MOV P0M1,#0                     ; Set ports to bi-directional
+  MOV 60H, #0                     ; Clear Storage Registers
+  MOV 61H, #0
+  MOV 62H, #0
+  MOV 63H, #0
+  MOV 64H, #0
+  MOV 65H, #0
+  SETB P2.4 					  ; Clear LEDS incase of reset
+  SETB P0.5
+  SETB P2.7
+  SETB P0.4
+  ACALL UPDATEDISPLAY
+  MOV R7, #0
+  MOV P0M1,#0                    ; Set ports to bi-directional
   MOV P1M1,#0
   MOV P2M1,#0
   MOV TMOD,#0x01                  ; Set TIMER 0 into mode 1
 
-clear:
-  SETB P2.4                       ; Turns off ALL leds
-  SETB P0.5
-  SETB P2.7
-  SETB P0.6
-  SETB P1.6
-  SETB P0.4
-  SETB P2.5
-  SETB P0.7
-  SETB P2.6
-  MOV R7,#0                       ; Makes sure counter is clear
-
 main:
-  JNB P2.0,cntr                   ; Stay in loop until button is pressed
-  JNB P2.1,debugSet               ; Enters debug mode with hard set value of button presses
-  SJMP main
-  
-cntr:
-  MOV R0,#21                      ; timeout function here
+  JNB P2.0,project 				  ; code for project
+  JNB P0.1,hacky 				  ; extra code for more points
+  JNB P2.2,resetHandle 			  ; reset switch handler
+  ACALL UPDATEDISPLAY 			  ; 7segment updater
+SJMP main
+
+hacky: LJMP song 				 ; Dirty hack to get further down the page
+
+project:
+    MOV R0,#21                    ; timeout function here
   tout_0:                         ; waits for X secods then starts to run MATHS on button presses
     MOV R1,#255                   ; T= ((21*255*255)+11)(.000001085) = 1.4816 seconds
   tout_1:                         ; Scope gave us 1.468 seconds
     MOV R2,#255
+	
   tout_2:
-    JNB P2.0,pressedButton        ; if button 1 is pressed,
+    JNB P2.0,buttonHandle         ; if button 1 is pressed,
     DJNZ R2, tout_2
     DJNZ R1, tout_1
     DJNZ R0, tout_0
+	ACALL MATHS 				  ; primary logic functions that perform
+	ACALL BCDLEDS 				  ; the calculations require
+	ACALL SOUND
+  SJMP main
 
-debugMode:
-  ACALL MATHS                     ; do maths and return values: R3=quotient  & R4=remainder
-  ACALL LEDS                      ; turns on leds based on R4 -> goes first so lights are on before speaker
-  ACALL LAME                      ; Beeps based on R3
-  
-  wait:
-    JNB P2.2, clear               ; after speaker and lights, loop until reset button is pressed
-    SJMP wait                     ; if reset-> jump to clear and start over
+MATHS: 								; divides button pushes by 16
+  MOV A, 60H 						; store remainder in 65H
+  MOV B, #16
+  DIV AB
+  MOV 64H,A 						; Quotient
+  MOV 65H,B 						; Remainder
+RET
 
-pressedButton:                   
-  CLR P1.6                        ; turns on led saying you pressed button
-  JNB P2.0,pressedButton          ; Loops until you let go of the button
-  SETB P1.6                       ; turns off the led
-  ACALL DEBOUNCE                  ; timeout to prevent bouncing of switch
-  INC R7                          ; increment our button presses counter
-  SJMP cntr                       ; jump to cntr section to wait for another press||timeout
+BCDLEDS:
+  MOV A, 65H 						; converts the remainder to
+  JZ noLed 							; BCD for LED output.
+  MOV R7, A
+  MOV R6, #4
+
+  Leds:
+    ANL A,#1 						; And's the Accum with one
+	PUSH 0E0H 						; pushes the AND'd value onto the stack
+	MOV A,R7  						; restore the accum
+	RR A 							; rotate right to repeat process
+	MOV R7,A
+	DJNZ R6,Leds
 	
-debugSet:                         ; Debug so we can test without having to push 100x
-  JNB P2.1,debugSet               ; stay here until you let go of the button
-  CLR P2.5                        ; turn on light so we know we're debugging
-  MOV R7,#19                      ; fill the counter with 19
-  SJMP debugMode                  ; jump back to main program loop with new debug counter
-
-; ==========================================================
-;	Subroutines Go Below This Line. Also CAPS for all Subs.
-; ==========================================================	
-
-MATHS:
-  MOV A,R7                        ; Num of Presses into Accum
-  MOV B,#16                       ; Divide by 16
-  DIV AB                          ; 
-  MOV 20H,R7                      ; store total button pushes
-  MOV R3,A                        ; Store quotient for beeps
-  MOV R4,B                        ; Store remainder for binary output of leds
-  RET
-
-LEDS:
-  MOV A,R4
-  JZ noLed                        ; jump if no leds are needed
-  MOV R0,#4                       ; setup our loop var (4 leds)
-  MOV R1,#21H                     ; base memory loaction for led values
-  MOV R6,#1                       ; our ANDing value to mask out bits
-  MOV R7,A                        ; next step destroys data, so we need a backup to restore
-
-  ledsInside:
-    ANL A,R6                      ; 0001 && A to get first bit
-    MOV @R1,A                     ; shift bits right and and again until nible is done
-    INC R1                        ; store AND'd bits into 21H-24H using pointer to access
-    MOV A,R7
-    RR A
-    MOV R7,A
-    DJNZ R0, ledsInside
-
-  ;lightBit4
-    MOV A, 24H                    ; Move 24H into ACC to do if operation 
-    JZ lightBit3                  ; if bit is set, turn on led, else jump to next LED
+    POP 0E0H 						; we pushed, now we must pop.
+    JZ lightBit3 				    
     CLR P2.4
-  lightBit3:
-    MOV A, 23H
+ lightBit3:
+    POP 0E0H
     JZ lightBit2
     CLR P0.5
   lightBit2:
-    MOV A, 22H
+    POP 0E0H
     JZ lightBit1
     CLR P2.7
   lightBit1:
-    MOV A, 21H
+    POP 0E0H
     JZ noLed
-    CLR P0.4
-
-  noLed:                          ; don't turn on an led
-  RET
-
-THROB:                            ; makes the speaker 'drop a mad beat'
-  MOV A,R3                        ; Restore our quotient into the acc
-  JZ noThrob                      ; if ACC is 0, don't make a sound
-  throbInside:
-    MOV R5,#0xF7                  ; R3: number of beeps 
-    MOV R6,#0xD1                  ; R4: remainder for leds
-    SETB ET0                      ; R5: upperbit of timer for A6 note
-    SETB EA                       ; R6: lowerbit of timer A6 note
-    SETB TR0                      ; Turn on timer here
-
-    MOV R0,#32                    ; Set delay loop timeout
-    ACALL DELAY
-    CLR TR0                       ; turn off timere
-    MOV R0,#20                    ; set shorter delay for no beep
-    MOV R5,#0
-    MOV R6,#0
-    ACALL DELAY 
-    DJNZ R3, throbInside          ; loop if more beeps
-  noThrob:
-    nop
-  RET
-
-LAME:
-  MOV A, R3
-  JZ noLame
-  lameInside:
-    ACALL GETFREAK
-  DJNZ R3, lameInside
-  noLame:
+    CLR P0.4	
+  noLed:
 RET
 
-GETFREAK:
-  MOV R0, #32
-  MOV R5, #250
-  wait:
-    ACALL FREAK_ON
-  DJNZ R5, wait
+buttonHandle:
+  CLR P1.6                        ; turns on led saying you pressed button
+  JNB P2.0,buttonHandle          ; Loops until you let go of the button
+  SETB P1.6                       ; turns off the led
+  ACALL DEBOUNCE                  ; timeout to prevent bouncing of switch
+  INC R7                          ; increment our button presses counter
+  MOV 60H, R7
+  ACALL DECIMALCONVERT
+  SJMP project                    ; jump to project section to wait for another press||timeout
 
-  MOV R5, #100
-  waitLess:
-    ACALL FREAK_OFF
-  DJNZ R5, waitLess
-
-RET
-
-FREAK_ON:
-  CPL P1.7
-  ACALL DELAY
-RET
-
-FREAK_OFF:
-  nop
-  ACALL DELAY
-RET
+resetHandle:
+  JNB P2.2, resetHandle  		  ; handler for reset switch fun times.
+  ACALL DEBOUNCE
+  LJMP init
 
 DEBOUNCE:                         ; Used for debouncing switches
-    MOV R1,#50
-  debounceLoop:
-    MOV R2,#200
+    MOV R5,#50
+  debounceLoop: 				  ; Prevent's 'thumbing it'
+    MOV R6,#200
   debounceLoop_1:
-    DJNZ R2,debounceLoop_1
-    DJNZ R1,debounceLoop
+    DJNZ R6,debounceLoop_1
+    DJNZ R5,debounceLoop
+  RET
+  
+DECIMALCONVERT: 					; Uses division by 10 to seperate out
+  MOV A, R7 						; the hex from more normal numbers
+  MOV B, #10 						; wouldn't have need this, but our 
+  DIV AB 							; converters were only decimal
+  MOV 61H, B
+  MOV B, #10
+  DIV AB
+  MOV 62H, B
+  MOV 63H, A 
+RET
+
+UPDATEDISPLAY: 						; function that multiplexes our 7segment cluster
+  SETB P0.7 						; 3 IO pins are tied to grounding transistors
+  MOV P1, 61H 
+  ACALL DEBOUNCE
+  CLR P0.7
+  SETB P2.5
+  MOV P1, 62H
+  ACALL DEBOUNCE
+  CLR P2.5
+  SETB P2.6
+  MOV P1, 63H
+  ACALL DEBOUNCE
+  CLR P2.6
+  SETB P1.6
+RET
+
+sound:
+  MOV A, 64H
+  JZ noSound
+sndRepeat:	
+  MOV R5,#0FFH
+Toggle:	
+  LCALL DELAY
+  CPL P1.7
+  DJNZ R5, Toggle
+  MOV R7,#55H
+sndRepeat_1:	
+  LCALL DELAY
+  DJNZ R7, sndRepeat_1
+  DJNZ 64H, SndRepeat
+noSound:
+  RET	
+DELAY:
+  MOV R0, #15
+  AGAIN11:
+    MOV R1,#0FFH
+  AGAIN12:
+    NOP
+    DJNZ R1,AGAIN12
+    DJNZ R0,AGAIN11
+RET
+
+DelayTone:
+  MOV R0, #05
+delayTone_1:
+  MOV R1,#0FFH
+delayTone_2:
+  NOP
+  DJNZ R1,delayTone_2
+  DJNZ R0,delayTone_1
   RET
 
-DELAY:                            ; R0 is set before call to lengthen loop
-  delayLoop:
-    MOV R1,#85
-  delayLoop_1:
-    MOV R2,#255
-  delayLoop_2:
-    DJNZ R2,delayLoop_2
-    DJNZ R1,delayLoop_1
-    DJNZ R0,delayLoop
-  RET
+song:
+	mov TH0, #0				; presets a 16-bit value into TIMER 0 
+	mov TL0, #0				; upper byte first and then lower byte
+	mov R5, #0				; sets this same 16-bit value into R3 and R4
+	mov R6, #0				; used to reload TIMER 0 in the ISR
+	SETB ET0					; enable TIMER 0 overflow interrupt
+	SETB EA						; set global interrupt enable bit
+	SETB TR0					; start TIMER 0 counting
+
+start: 							;Beginning of the song
+	mov R0, #8
+	acall playDX6	
+	acall Spacing
+	mov R0, #8
+	acall playE6	
+	acall Spacing
+	mov R0, #16
+	acall playFX6	
+	acall Spacing		
+	mov R0, #16
+	acall playB6	
+	acall Spacing
+	mov R0, #8
+	acall playDX6	
+	acall Spacing
+	mov R0, #8
+	acall playE6	
+	acall Spacing
+	mov R0, #8
+	acall playFX6	
+	acall Spacing
+	mov R0, #8
+	acall playB6	
+	acall Spacing		
+	mov R0, #8
+	acall playCX16	
+	acall Spacing
+	mov R0, #8
+	acall playDX16	
+	acall Spacing
+	mov R0, #8
+	acall playCX16	
+	acall Spacing	
+	mov R0, #8
+	acall playAX6	
+	acall Spacing	
+	mov R0, #16
+	acall playB6	
+	acall Spacing
+	mov R0, #16
+	acall playFX6	
+	acall Spacing
+	mov R0, #8
+	acall playDX6	
+	acall Spacing
+	mov R0, #8
+	acall playE6	
+	acall Spacing
+	mov R0, #16
+	acall playFX6	
+	acall Spacing
+	mov R0, #16
+	acall playB6	
+	acall Spacing
+	mov R0, #8
+	acall playCX16	
+	acall Spacing
+	mov R0, #8
+	acall playAX6	
+	acall Spacing	
+	mov R0, #8
+	acall playB6	
+	acall Spacing		
+	mov R0, #8
+	acall playCX16	
+	acall Spacing		
+	mov R0, #8
+	acall playE16	
+	acall Spacing		
+	mov R0, #8
+	acall playDX16	
+	acall Spacing
+	mov R0, #8
+	acall playAX6	
+	acall Spacing		
+	mov R0, #8
+	acall playE16	
+	acall Spacing	
+	mov R0, #8
+	acall playCX16	
+	acall Spacing   			;end of first line
+loophereforfun:
+	mov R0, #16
+	acall playFX6	
+	acall Spacing
+	mov R0, #18
+	acall playGX6	
+	acall Spacing
+	mov R0, #16
+	acall playDX6	
+	acall Spacing
+	mov R0, #8
+	acall playDX6	
+	acall Spacing
+	mov R0, #8
+	acall playDX6	
+	acall Spacing
+	mov R0, #8
+	acall Spacing
+	mov R0, #8
+	acall playD6	
+	acall Spacing
+	mov R0, #8
+	acall playCX6	
+	acall Spacing
+	mov R0, #8
+	acall playB6	
+	acall Spacing
+	mov R0, #8
+	acall Spacing
+	mov R0, #16
+	acall playB6	
+	acall Spacing	
+	mov R0, #8
+	acall playCX6	
+	acall Spacing	
+	mov R0, #16
+	acall playD6	
+	acall Spacing	
+	mov R0, #8
+	acall playD6	
+	acall Spacing	
+	mov R0, #8
+	acall playCX6	
+	acall Spacing	
+	mov R0, #8
+	acall playB6	
+	acall Spacing		
+	mov R0, #8
+	acall playCX6	
+	acall Spacing
+	mov R0, #8
+	acall playDX6	
+	acall Spacing
+	mov R0, #8
+	acall playFX6	
+	acall Spacing
+	mov R0, #8
+	acall playGX6	
+	acall Spacing
+;5
+	mov R0, #8
+	acall playDX6	
+	acall Spacing
+	mov R0, #8
+	acall playFX6	
+	acall Spacing
+	mov R0, #8
+	acall playCX6	
+	acall Spacing
+	mov R0, #8
+	acall playDX6	
+	acall Spacing
+	mov R0, #8
+	acall playB6	
+	acall Spacing	
+	mov R0, #8
+	acall playCX6	
+	acall Spacing	
+	mov R0, #8
+	acall playB6	
+	acall Spacing
+	mov R0, #16
+	acall playDX6	
+	acall Spacing
+	mov R0, #16
+	acall playFX6	
+	acall Spacing
+;5
+	mov R0, #8
+	acall playGX6	
+	acall Spacing
+	mov R0, #8
+	acall playDX6	
+	acall Spacing
+	mov R0, #8
+	acall playFX6	
+	acall Spacing
+	mov R0, #8
+	acall playCX6	
+	acall Spacing
+	mov R0, #8
+	acall playDX6	
+	acall Spacing
+	mov R0, #8
+	acall playB6	
+	acall Spacing
+	mov R0, #8
+	acall playD6	
+	acall Spacing
+	mov R0, #8
+	acall playDX6	
+	acall Spacing
+	mov R0, #8
+	acall playD6	
+	acall Spacing
+	mov R0, #8
+	acall playCX6	
+	acall Spacing
+	mov R0, #8
+	acall playB6	
+	acall Spacing
+	mov R0, #8
+	acall playCX6	
+	acall Spacing
+	mov R0, #16
+	acall playD6	
+	acall Spacing
+	mov R0, #8
+	acall playB6	
+	acall Spacing
+	mov R0, #8
+	acall playCX6	
+	acall Spacing
+	mov R0, #8
+	acall playDX6	
+	acall Spacing
+	mov R0, #8
+	acall playFX6	
+	acall Spacing	
+	mov R0, #8
+	acall playCX6	
+	acall Spacing
+	mov R0, #8
+	acall playDX6	
+	acall Spacing	
+	mov R0, #8
+	acall playCX6	
+	acall Spacing	
+	mov R0, #8
+	acall playB6	
+	acall Spacing	
+	mov R0, #16
+	acall playCX6	
+	acall Spacing	
+	mov R0, #16
+	acall playB6	
+	acall Spacing	
+	mov R0, #16
+	acall playCX6	
+	acall Spacing
+	JNB P2.3,bail 
+	Ljmp loophereforfun	
+	bail:
+	LJMP main
+; Repeat the song
+playC6:				
+				clr p2.4       
+		mov R5, #0xFC
+		mov R6, #0x8F
+		acall stall	
+                setb p2.4     
+	ret	
+playCx6:				
+				clr p0.5       
+		mov R5, #0xFC
+		mov R6, #0xC1
+		acall stall	
+                setb p0.5     
+	ret		
+				
+playD6:
+				clr p2.7
+		mov R5, #0xFC
+		mov R6, #0xEF
+		acall stall
+                setb p2.7
+	ret
+playDX6:
+                clr p0.6
+		mov R5, #0xFD
+		mov R6, #0x1B
+		acall stall
+                setb p0.6
+	ret
+playE6:
+                clr p1.6
+		mov R5, #0xFD
+		mov R6, #0x45
+		acall stall
+                setb p1.6
+	ret
+playF6:
+                clr p0.4
+		mov R5, #0xFD
+		mov R6, #0x6C
+		acall stall
+                setb p0.4
+	ret
+playFX6:
+                clr p2.5
+		mov R5, #0xFD
+		mov R6, #0x91
+		acall stall
+                setb p2.5
+	ret
+playG6:
+                clr p0.7
+		mov R5, #0xFD
+		mov R6, #0xB4
+		acall stall
+                setb p0.7
+	ret
+playGX6:
+                clr p2.6
+		mov R5, #0xFD
+		mov R6, #0xD5
+		acall stall
+                setb p2.6
+	ret
+playA6:
+                clr p2.4
+		mov R5, #0xFD
+		mov R6, #0xF4
+		acall stall
+                setb p2.4
+	ret
+playAX6:
+                clr p0.5
+		mov R5, #0xFE
+		mov R6, #0x12
+		acall stall
+                setb p0.5
+	ret
+playB6:
+                clr p2.7
+		mov R5, #0xFE
+		mov R6, #0x2D
+		acall stall
+                setb p2.7
+	ret
+playC16:				
+				clr p0.6       
+		mov R5, #0xFE
+		mov R6, #0x48
+		acall stall	
+                setb p0.6      
+	ret	
+playCX16:				
+				 clr p1.6       
+		mov R5, #0xFE
+		mov R6, #0x60
+		acall stall	
+                setb p1.6       
+	ret			
+				
+playD16:
+                clr p0.4
+		mov R5, #0xFE
+		mov R6, #0x78
+		acall stall
+                setb p0.4
+	ret
+playDX16:
+                clr p2.5
+		mov R5, #0xFE
+		mov R6, #0x8E
+		acall stall
+                setb p2.5
+	ret
+playE16:
+                clr p0.7
+		mov R5, #0xFE
+		mov R6, #0xA2
+		acall stall
+        setb p0.7
+	ret
+
+	
+	
+Spacing:
+		mov R0, #1
+		mov R5, #0x00	; TIMER 0 re-load value is set to minimum
+		mov R6, #0x00	; possible value.
+		acall stall
+	ret
+
+
+playREST:
+		mov R5, #0x00	; TIMER 0 re-load value is set to minimum
+		mov R6, #0x00	; possible value.
+		clr TR0		; stops TIMER 0 to stop sound
+		acall stall
+		setb TR0	; restarts TIMER 0 for next note
+	ret
+; **********************************************************************************
+; *  This loop does nothing but loop to allow the note to play for the duration
+; *  set by R0.  Set R0 to the proper value before calling this subroutine.
+; **********************************************************************************
+stall:
+	loop0:
+		mov R1, #65		; The values entered into R1
+	loop1:				; and R2 control the tempo of the
+		mov R2, #255		; song.  Smaller values make the 
+	loop2:				; song play faster.
+		nop
+		djnz R2, loop2
+		djnz R1, loop1
+		djnz R0, loop0
+		ret
 
 END
