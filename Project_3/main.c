@@ -52,7 +52,10 @@ void main() {
   char keyVal,keyStore;
   float input,result;
 
-  while(true) { 
+  serial_init();
+  printf("i work\n\n");
+
+  while(false) { 
     keyVal = read();
     keyStore = keyVal;
 
