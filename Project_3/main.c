@@ -17,10 +17,19 @@ int byteSwap[2] = {0xF0,0x0F};
 
 char values[4][4] = { 'F','3','2','1',
                       'E','6','5','4',
+
                       'D','9','8','7',
                       'C','B','0','A' };
 
 void serial_init() {
+  P0M1 = 0x00;
+  P0M2 = 0x00;
+  P1M1 = 0x00;
+  P1M2 = 0x00;
+  P2M1 = 0x00;
+  P2M2 = 0x00;
+  P3M1 = 0x00;
+  P3M2 = 0x00;
   SCON = 0x50;
   TMOD |= 0x20;
   TH1 = 0xFD;
@@ -39,11 +48,8 @@ char read() {
   for(var i=0; i<2; i++) {
     P3 = byteSwap[i];
     for (var j=0; j<4; j++) {
-      if (keys[i][j]) {
-        return values[i][j];
-      } else {
-        return 'X';
-      }
+      if (keys[i][j]) return values[i][j];
+      else return 'X';
     }
   }
 } 
