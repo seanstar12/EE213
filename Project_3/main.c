@@ -16,9 +16,9 @@ int keys[2][4] = {  R0,R1,R2,R3,
 int byteSwap[2] = {0xF0,0x0F}; 
 
 char values[4][4] = { 'F','3','2','1',
-                    'E','6','5','4',
-                    'D','9','8','7',
-                    'C','B','0','A' };
+                      'E','6','5','4',
+                      'D','9','8','7',
+                      'C','B','0','A' };
 
 //A simple delay function
 void delay(int a) {
@@ -31,7 +31,7 @@ char read() {
   for(var i=0; i<2; i++) {
     P3 = byteSwap[i];
     for (var j=0; j<4; j++) {
-      if (keys[i][j]){
+      if (keys[i][j]) {
         return values[i][j];
       } else {
         return 'X';
@@ -42,7 +42,17 @@ char read() {
 
 void main() {
   char keyVal,keyStore;
+  float input,result;
 
-  
 
+  while(true) { 
+    keyVal = read();
+    keyStore = keyVal;
+
+    while(keyVal == read()) delay(1000); 
+
+    if (keyStore != 'X') {
+      
+    }
+  }
 }
