@@ -20,6 +20,14 @@ char values[4][4] = { 'F','3','2','1',
                       'D','9','8','7',
                       'C','B','0','A' };
 
+void serial_init() {
+  SCON = 0x50;
+  TMOD |= 0x20;
+  TH1 = 0xFD;
+  TR1 = 1;
+  TI = 1;  
+}
+
 //A simple delay function
 void delay(int a) {
   for (int i=0; i < a; i++);
@@ -43,7 +51,6 @@ char read() {
 void main() {
   char keyVal,keyStore;
   float input,result;
-
 
   while(true) { 
     keyVal = read();
