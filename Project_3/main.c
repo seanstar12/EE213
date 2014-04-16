@@ -27,22 +27,6 @@ void uart_init (void);
 void delay(int);
 void printString(unsigned char *);
 
-void serial_init() {
-  P0M1 = 0x00;
-  P0M2 = 0x00;
-  P1M1 = 0x00;
-  P1M2 = 0x00;
-  P2M1 = 0x00;
-  P2M2 = 0x00;
-  P3M1 = 0x00;
-  P3M2 = 0x00;
-  SCON = 0x50;
-  TMOD |= 0x20;
-  TH1 = 0xFD;
-  TR1 = 1;
-  TI = 1;  
-}
-
 //Toggles rows and columns to read pins
 //from the keypad
 char read() {
