@@ -16,10 +16,16 @@ int keys[2][4] = {  R0,R1,R2,R3,
 int byteSwap[2] = {0xF0,0x0F}; 
 
 char values[4][4] = { 'F','3','2','1',
-                      'E','6','5','4',
+								'E','6','5','4',
 
-                      'D','9','8','7',
-                      'C','B','0','A' };
+								'D','9','8','7',
+								'C','B','0','A' };
+					  
+void SerTx(unsigned char);
+void SerRx(unsigned char *);
+void uart_init (void);
+void delay(int);
+void printString(unsigned char *);
 
 void serial_init() {
   P0M1 = 0x00;
@@ -37,11 +43,6 @@ void serial_init() {
   TI = 1;  
 }
 
-//A simple delay function
-void delay(int a) {
-  for (int i=0; i < a; i++);
-}
-
 //Toggles rows and columns to read pins
 //from the keypad
 char read() {
@@ -55,20 +56,85 @@ char read() {
 } 
 
 void main() {
-  char keyVal,keyStore;
-  float input,result;
+	char byteBuf;
+	char stuff[17] = "Allo";
+	int position = 0;
 
-  serial_init();
-  printf("i work\n\n");
+	uart_init();
+	
+	while(1) {
+	//	SerRx(&byteBuf); // read byte from serial port
+	//	SerTx(byteBuf); // send byte back to serial port
+	  SerTx('p');
+	//  printString(&stuff);
+	//	delay(3000);
+	}
+}
 
-  while(false) { 
-    keyVal = read();
-    keyStore = keyVal;
+// don't think this will work because of interrupts
+// they are lame and i hate them.
+void printString(unsigned char * str) {
+  int j;
+	for (j=0;j<sizeof(str);j++){
+	 // SerTx(str[j]);
+		SerTx('g');
+	}
+}
 
-    while(keyVal == read()) delay(1000); 
+void SerTx(unsigned char x) {
+	SBUF = x; // put the char in SBUF register
+	while(TI == 0); // wait until transmitted
+	TI = 0;
+}
 
-    if (keyStore != 'X') {
-      
-    }
+void delay(int time) {
+  unsigned int x, y;
+	for(x=0;x<1275;x++){
+    for(y=0;y<time;y++);
   }
+}
+
+void uart_init (void) {
+  
+  P0M1 = 0x00;
+  P0M2 = 0x00;
+  P1M1 = 0x00;
+  P1M2 = 0x00;
+  P2M1 = 0x00;
+  P2M2 = 0x00;
+  P3M1 = 0x00;
+  P3M2 = 0x00;
+	
+  // configure UART
+  // clear SMOD0
+  PCON &= ~0x40;
+  SCON = 0x50;
+  // set or clear SMOD1
+  PCON &= 0x7f;
+  PCON |= (0 << 8);
+  SSTAT = 0x20;
+
+  // enable break detect
+  AUXR1 |= 0x40;
+
+  // configure baud rate generator
+  BRGCON = 0x00;
+  BRGR0 = 0xF0;
+  BRGR1 = 0x02;
+  BRGCON = 0x03;
+
+  // TxD = push-pull, RxD = input
+  P1M1 &= ~0x01;
+  P1M2 |= 0x01;
+  P1M1 |= 0x02;
+  P1M2 &= ~0x02;
+
+
+  // set isr priority to 0
+  IP0 &= 0xEF;
+  IP0H &= 0xEF;
+  // enable uart interrupt
+  ESR = 1;
+  EST =1 ;
+  EA =1;
 }
