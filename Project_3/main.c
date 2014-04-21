@@ -1,74 +1,87 @@
 #include <REG932.H>
+#include <stdlib.h>
 
-//Define Pins to usable names
-sbit R0=P3^0;
-sbit R1=P3^1;
-sbit R2=P3^2;
-sbit R3=P3^3;
-sbit C0=P3^4;
-sbit C1=P3^5;
-sbit C2=P3^6;
-sbit C3=P3^7;
-
-int keys[2][4] = {  R0,R1,R2,R3,
-                    C0,C1,C2,C3 };
-
-int byteSwap[2] = {0xF0,0x0F}; 
-
-char values[4][4] = { 'F','3','2','1',
-								'E','6','5','4',
-
-								'D','9','8','7',
-								'C','B','0','A' };
-					  
 void SerTx(unsigned char);
-void SerRx(unsigned char *);
-void uart_init (void);
+int SerRx(unsigned char *);
+int uart_init (void);
 void delay(int);
-void printString(unsigned char *);
+void printString(unsigned char *, int, int);
+void printChar(unsigned char);
+int printWelcome();
 
-//Toggles rows and columns to read pins
-//from the keypad
-char read() {
-  for(var i=0; i<2; i++) {
-    P3 = byteSwap[i];
-    for (var j=0; j<4; j++) {
-      if (keys[i][j]) return values[i][j];
-      else return 'X';
-    }
-  }
-} 
-
-void main() {
+void main(void) {
 	char byteBuf;
-	char stuff[17] = "Allo";
-	int position = 0;
+	char num[2]= "";
+	int numLen[2] = {0,0};
 
-	uart_init();
+	int numSelect = 0;
+	int t2=0;
+	int welcomeVar = 0;
+	int uartEn = uart_init();
 	
-	while(1) {
-	//	SerRx(&byteBuf); // read byte from serial port
-	//	SerTx(byteBuf); // send byte back to serial port
-	  SerTx('p');
-	//  printString(&stuff);
-	//	delay(3000);
+
+	while(uartEn) {
+		if (!welcomeVar) welcomeVar = printWelcome();
+		
+		if (SerRx(&byteBuf)){
+			int temp = numLen[numSelect];
+			if ( byteBuf == 0x0D) {
+				printString("====================",20,1);
+			  t2 = atoi (num[0]);
+				printString((char)t2,20,1);
+				
+			} else if (byteBuf == "+" || byteBuf == 0x2B ) {
+				if (numLen[numSelect] < 1) printString("Enter a Number Frist",21,1);
+				else {
+					printString("",1,1);
+					printString("+",1,1);
+					numSelect++;
+				}
+			} else if (numLen[numSelect] < 32 && numSelect == 0){
+					num[0][temp] = byteBuf;
+					numLen[numSelect]++;
+			} else if (numLen[numSelect] < 32 && numSelect == 1){
+					num[1][temp] = byteBuf;
+					numLen[numSelect]++;
+			}
+		}		
+		printString(num[numSelect],numLen[numSelect],0);
+
 	}
 }
 
-// don't think this will work because of interrupts
-// they are lame and i hate them.
-void printString(unsigned char * str) {
+int printWelcome(){
+	printString("Welcome To Our Calculator",26,1);
+	printString("Input the First Number...",26,1);
+}
+
+void printString(unsigned char * str,int length, int isStr) {
   int j;
-	for (j=0;j<sizeof(str);j++){
-	 // SerTx(str[j]);
-		SerTx('g');
+	if (!length) length = 1;
+	
+	for (j=0;j<length;j++) SerTx(str[j]);
+	if (isStr){
+		printChar(0x0A);
 	}
+	printChar(0x0D);
+
+}
+
+void printChar(unsigned char character){
+	SerTx(character);
 }
 
 void SerTx(unsigned char x) {
 	SBUF = x; // put the char in SBUF register
 	while(TI == 0); // wait until transmitted
 	TI = 0;
+}
+
+int SerRx(unsigned char * pX){
+  while(RI == 0); // wait until received
+  RI = 0;
+  *pX = SBUF; // copy the data in SBUF to (pX)
+	return 1;
 }
 
 void delay(int time) {
@@ -78,16 +91,11 @@ void delay(int time) {
   }
 }
 
-void uart_init (void) {
-  
-  P0M1 = 0x00;
+int uart_init (void) {
+	P0M1 = 0x00;
   P0M2 = 0x00;
-  P1M1 = 0x00;
-  P1M2 = 0x00;
   P2M1 = 0x00;
   P2M2 = 0x00;
-  P3M1 = 0x00;
-  P3M2 = 0x00;
 	
   // configure UART
   // clear SMOD0
@@ -117,8 +125,11 @@ void uart_init (void) {
   // set isr priority to 0
   IP0 &= 0xEF;
   IP0H &= 0xEF;
+	
   // enable uart interrupt
-  ESR = 1;
-  EST =1 ;
-  EA =1;
+	ESR = 0;
+	EST = 0;
+	EA = 1;
+
+	return 1;
 }
