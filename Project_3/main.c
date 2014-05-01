@@ -1,7 +1,7 @@
 /*
   COMP_ENG 213: DIGITAL SYSTEMS DESIGN SP2014 -- Project 3
   Fun times with the 8051 Microcontroller.
-  Originally supposed to display output via serial, but we're "pro's".
+  Originally supposed to display output via serial, but we're "pros".
   Creators of this monstrosity: 
     Sean Starnes
     Benjamin [redacted](for his protection)
