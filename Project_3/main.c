@@ -45,15 +45,15 @@ sbit a6 = P0^6;
 sbit a7 = P0^7;
 
 code unsigned char values [4][4] =  { '7', '4', '1', '0',
-												'8', '5', '2', '.',
-												'9', '6', '3', '-',
-												'/', '*', '+', '='};
+																			'8', '5', '2', '.',
+																			'9', '6', '3', '-',
+																			'/', '*', '+', '='};
 code unsigned char errMsg [5][15] =  {
-												"",
-												"No Implement!",
-												"Too Big!",
-												"Resetting...",
-												"I Can't Math!" };
+																			"",
+																			"No Implement!",
+																			"Too Big!",
+																			"Resetting...",
+																			"I Can't Math!" };
 
 unsigned char scanTehThings();
 void delay(int);
@@ -200,7 +200,7 @@ void displayMsg(char * str,char * msg,unsigned int delVar){
 	Lcd_Write_String(msg);
 	if (delVar > 0){ 							// if there is no delay
 		clrStr(msg); 								// clear the string and
-		delay(delVar); 							// resend it to the display
+		delay(delVar); 							// resend blank to the display
 		Lcd_Set_Cursor(2,0);	
 		Lcd_Write_String(msg);
 	}
