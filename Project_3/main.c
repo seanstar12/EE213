@@ -44,16 +44,17 @@ sbit a5 = P0^5;
 sbit a6 = P0^6;
 sbit a7 = P0^7;
 
-code unsigned char values [4][4] =  { '7', '4', '1', '0',
-																			'8', '5', '2', '.',
-																			'9', '6', '3', '-',
-																			'/', '*', '+', '='};
+code unsigned char values [4][4] =  { 
+		'7', '4', '1', '0',
+		'8', '5', '2', '.',
+		'9', '6', '3', '-',
+		'/', '*', '+', '='};
 code unsigned char errMsg [5][15] =  {
-																			"",
-																			"No Implement!",
-																			"Too Big!",
-																			"Resetting...",
-																			"I Can't Math!" };
+		"",
+		"No Implement!",
+		"Too Big!",
+		"Resetting...",
+		"I Can't Math!" };
 
 unsigned char scanTehThings();
 void delay(int);
