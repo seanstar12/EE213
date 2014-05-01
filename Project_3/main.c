@@ -1,4 +1,18 @@
+/*
+  COMP_ENG 213: DIGITAL SYSTEMS DESIGN SP2014 -- Project 3
+  Fun times with the 8051 Microcontroller.
+  Originally supposed to display output via serial, but we're "pro's".
+  Creators of this monstrosity: 
+    Sean Starnes
+    Benjamin [redacted](for his protection)
+
+*/
+
 #include <REG932.H>
+/*
+  Lcd.h obtained from electrosome. <-- awesome write up.
+  http://electrosome.com/interfacing-lcd-with-8051-using-keil-c-at89c51/
+*/
 #include <lcd.h>
 
 #ifndef NULL
