@@ -31,7 +31,7 @@ to include the functions we didnt need.
 I've seen more inputs on a polynesian prostitute. It really sucked being limited on pins.
 the simon board has lots of space, but they are reserved for serial and other operations.
 probably could have freed up one or two more pins, but fuck it, we're done. So the pins... It
-sucked because we are using 8 for the keypad, and 8 for the lcd. we cheated a little on the lcd
+sucked because we are using 8 for the keypad, and 10 for the lcd. we cheated a little on the lcd
 by tying the RW pin to ground. We don't need no stinking read. Although, it would have been nice to use
 this because WE COULD HAVE USED IT TO STORE OUR DATA. Fuck me, rite? I swear, this controller is 10% give
 and 90% fuck you. If we had perhaps 1 more pin free, we could have used the LCD's onboard memory and
