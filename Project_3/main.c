@@ -4,7 +4,7 @@
   Originally supposed to display output via serial, but we're "pros".
   Creators of this monstrosity: 
     Sean Starnes
-    Benjamin [redacted](for his protection)
+    Benjamin Miller
 
 */
 
