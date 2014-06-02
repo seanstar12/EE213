@@ -7,4 +7,6 @@ the remainder in binary to the onboard LEDs E.g. ButtonPresses= 35 --> beeps twi
 
 ###Creative Component
 ======
-Since this was trivial, the project also plays a song when a different button is pressed.
+Since this was trivial, the project also plays a song when a different button is pressed. Also
+3 seven segment displays were used to display the numeric output. These were wired in parallel 
+and BJTs were used to control the path to ground due to the limited number of pins.
