@@ -17,7 +17,7 @@ We had our program loaded with arrays, arrays for all the things. But when it at
 to start doing things with these arrays, we kept getting memory overlap errors when we would
 try to compile. So we made our static arrays (the keypad, and error messages) into the 'code' type
 which gave us a little breathing room. Next the optimized out all of the excess variables (i,j,this,that)
-and started reusing all that we could. We abuse the shit out of the buffer to do our bidding.
+and started reusing all that we could. We abuse the buffer to do our bidding.
 also, We hacked in some external functions by ripping them out of the stdlib and stdio so we didn't have
 to include the functions we didnt need.
 
